@@ -88,24 +88,11 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://medisaarthi.vercel.app",  # Production frontend
-        "https://*.vercel.app",           # Vercel preview deployments
-        "http://localhost:3000",          # Local development
-        "http://localhost:3001",          # Alternative local port
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# CORS middleware - Updated for Vercel frontend
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # Local development
-        "http://localhost:5173",  # Vite dev server
-        "https://*.vercel.app",   # Vercel deployments
-        "https://vercel.app"       # Vercel root
+        "https://medi-saarthi-frontend.vercel.app",  # Production frontend
+        "https://medisaarthi.vercel.app",            # Alternative production domain
+        "https://*.vercel.app",                      # Vercel preview deployments
+        "http://localhost:3000",                     # Local development
+        "http://localhost:5173",                     # Vite dev server
     ],
     allow_credentials=True,
     allow_methods=["*"],
