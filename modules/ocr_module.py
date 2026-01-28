@@ -22,10 +22,25 @@ os.environ['FLAGS_use_mkldnn'] = '0'
 
 # Lazy initialization of PaddleOCR
 _ocr = None
+_ocr_available = None
+
+def is_ocr_available():
+    """Check if PaddleOCR is available"""
+    global _ocr_available
+    if _ocr_available is None:
+        try:
+            from paddleocr import PaddleOCR
+            _ocr_available = True
+        except ImportError:
+            _ocr_available = False
+            print("[OCR] PaddleOCR not available - OCR features will be disabled")
+    return _ocr_available
 
 def get_ocr():
     """Lazy-load PaddleOCR instance"""
     global _ocr
+    if not is_ocr_available():
+        raise ImportError("PaddleOCR is not installed. OCR features are disabled in this deployment.")
     if _ocr is None:
         from paddleocr import PaddleOCR
         _ocr = PaddleOCR(use_angle_cls=True, lang='en')

@@ -863,6 +863,14 @@ async def upload_and_extract(file: UploadFile = File(...)):
     from pathlib import Path
     
     try:
+        # Check if OCR is available
+        from modules.ocr_module import is_ocr_available
+        if not is_ocr_available():
+            raise HTTPException(
+                status_code=503,
+                detail="OCR processing is temporarily unavailable in this deployment. Please use the demo data for testing."
+            )
+        
         # Validate file type
         allowed_extensions = {'.png', '.jpg', '.jpeg', '.pdf', '.tiff', '.bmp'}
         file_ext = Path(file.filename).suffix.lower()
