@@ -270,6 +270,48 @@ async def health_check():
 
 @app.get("/debug")
 async def debug_info():
+    """Debug endpoint to check environment and database connection"""
+    import os
+    from db.models import MONGO_URI, DATABASE_NAME, COLLECTION_NAME
+    
+    try:
+        collection = await mongo_manager.get_collection()
+        total_records = await collection.count_documents({})
+        
+        # Get actual database info
+        db_name = mongo_manager.db.name if mongo_manager.db else "NOT_CONNECTED"
+        
+        return {
+            "environment": {
+                "MONGO_URI": MONGO_URI[:50] + "..." if MONGO_URI else "NOT_SET",
+                "DATABASE_NAME": DATABASE_NAME,
+                "COLLECTION_NAME": COLLECTION_NAME,
+                "ENVIRONMENT": os.getenv("ENVIRONMENT", "NOT_SET")
+            },
+            "database": {
+                "connected": mongo_manager.db is not None,
+                "database_name": db_name,
+                "collection_name": COLLECTION_NAME,
+                "total_records": total_records
+            },
+            "atlas_info": {
+                "cluster": "cluster0" if "cluster0" in (MONGO_URI or "") else "DIFFERENT_CLUSTER",
+                "target_db": "medisaarthi" if "medisaarthi" in (MONGO_URI or "") else "DIFFERENT_DB"
+            }
+        }
+    except Exception as e:
+        return {
+            "error": str(e),
+            "environment": {
+                "MONGO_URI": MONGO_URI[:50] + "..." if MONGO_URI else "NOT_SET",
+                "DATABASE_NAME": DATABASE_NAME,
+                "COLLECTION_NAME": COLLECTION_NAME
+            }
+        }
+
+
+@app.get("/debug")
+async def debug_info():
     """Debug endpoint to check database configuration"""
     import os
     from db.models import MONGO_URI, DATABASE_NAME, COLLECTION_NAME
