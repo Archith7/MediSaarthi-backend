@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LabAssist AI - Medical Lab Analytics</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-flask"></i>
+            <h2>LabAssist AI</h2>
+        </div>
+        <ul class="nav-menu">
+            <li class="nav-item active" data-page="dashboard">
+                <i class="fas fa-chart-line"></i>
+                <span>Dashboard</span>
+            </li>
+            <li class="nav-item" data-page="chat">
+                <i class="fas fa-comments"></i>
+                <span>Query Chat</span>
+            </li>
+            <li class="nav-item" data-page="upload">
+                <i class="fas fa-upload"></i>
+                <span>Upload Reports</span>
+            </li>
+            <li class="nav-item" data-page="patients">
+                <i class="fas fa-users"></i>
+                <span>Patients</span>
+            </li>
+        </ul>
+        <div class="sidebar-footer">
+            <div class="status-indicator">
+                <span class="status-dot" id="apiStatus"></span>
+                <span class="status-text">API Status</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <!-- Dashboard Page -->
+        <section id="dashboard-page" class="page active">
+            <div class="page-header">
+                <h1>Dashboard Overview</h1>
+                <button class="btn btn-primary" onclick="refreshDashboard()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="totalPatients">-</h3>
+                        <p>Total Patients</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <i class="fas fa-vial"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="totalTests">-</h3>
+                        <p>Total Tests</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="abnormalTests">-</h3>
+                        <p>Abnormal Results</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="testTypes">-</h3>
+                        <p>Test Types</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Recent Test Distribution</h3>
+                    </div>
+                    <div class="chart-content">
+                        <canvas id="testDistributionChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Abnormal Results by Test Type</h3>
+                    </div>
+                    <div class="chart-content">
+                        <canvas id="abnormalChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="activity-card">
+                <div class="activity-header">
+                    <h3>Recent Abnormal Results</h3>
+                </div>
+                <div class="activity-content" id="recentActivity">
+                    <div class="loading-spinner">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Chat Page -->
+        <section id="chat-page" class="page">
+            <div class="page-header">
+                <h1>Query Assistant</h1>
+                <button class="btn btn-secondary" onclick="clearChat()">
+                    <i class="fas fa-trash"></i> Clear Chat
+                </button>
+            </div>
+
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="welcome-message">
+                        <i class="fas fa-robot"></i>
+                        <h3>Hello! I'm LabAssist AI</h3>
+                        <p>Ask me anything about your lab reports:</p>
+                        <div class="suggestion-chips">
+                            <button class="chip" onclick="sendSuggestion(this.textContent)">Show patients with low hemoglobin</button>
+                            <button class="chip" onclick="sendSuggestion(this.textContent)">Who has abnormal WBC?</button>
+                            <button class="chip" onclick="sendSuggestion(this.textContent)">Show hemoglobin trend for Renuka</button>
+                            <button class="chip" onclick="sendSuggestion(this.textContent)">List all CBC reports</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-input-container">
+                    <input type="text" 
+                           id="chatInput" 
+                           class="chat-input" 
+                           placeholder="Ask about lab results... (e.g., 'Who has low hemoglobin?')"
+                           onkeypress="handleChatKeyPress(event)">
+                    <button class="btn btn-primary btn-send" onclick="sendMessage()">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Upload Page -->
+        <section id="upload-page" class="page">
+            <div class="page-header">
+                <h1>Upload Lab Reports</h1>
+            </div>
+
+            <div class="upload-container">
+                <div class="upload-zone" id="uploadZone" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <h3>Drag & Drop Images Here</h3>
+                    <p>or click to browse</p>
+                    <input type="file" id="fileInput" multiple accept="image/*" onchange="handleFiles(this.files)" style="display: none;">
+                    <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                        <i class="fas fa-folder-open"></i> Browse Files
+                    </button>
+                </div>
+
+                <div class="upload-preview" id="uploadPreview" style="display: none;">
+                    <h3>Selected Files</h3>
+                    <div class="preview-grid" id="previewGrid"></div>
+                    <div class="upload-actions">
+                        <button class="btn btn-success" onclick="uploadFiles()">
+                            <i class="fas fa-upload"></i> Upload & Process
+                        </button>
+                        <button class="btn btn-secondary" onclick="clearUpload()">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </div>
+
+                <div class="upload-progress" id="uploadProgress" style="display: none;">
+                    <div class="progress-header">
+                        <h3>Processing...</h3>
+                        <span id="progressText">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-status" id="progressStatus"></div>
+                </div>
+
+                <div class="upload-results" id="uploadResults"></div>
+            </div>
+        </section>
+
+        <!-- Patients Page -->
+        <section id="patients-page" class="page">
+            <div class="page-header">
+                <h1>Patient Records</h1>
+                <input type="text" id="patientSearch" class="search-input" placeholder="Search patients..." oninput="searchPatients(this.value)">
+            </div>
+
+            <div class="patients-table-container">
+                <table class="patients-table">
+                    <thead>
+                        <tr>
+                            <th>Patient Name</th>
+                            <th>Age</th>
+                            <th>Gender</th>
+                            <th>Test Count</th>
+                            <th>Latest Test</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="patientsTableBody">
+                        <tr>
+                            <td colspan="7" class="loading-cell">
+                                <i class="fas fa-spinner fa-spin"></i> Loading patients...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Patient Detail Modal -->
+    <div id="patientModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalPatientName">Patient Details</h2>
+                <button class="modal-close" onclick="closePatientModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
