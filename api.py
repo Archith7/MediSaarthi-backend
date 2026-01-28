@@ -268,6 +268,34 @@ async def health_check():
     }
 
 
+@app.get("/debug")
+async def debug_info():
+    """Debug endpoint to check database configuration"""
+    import os
+    from db.models import MONGO_URI, DATABASE_NAME, COLLECTION_NAME
+    
+    try:
+        collection = await mongo_manager.get_collection()
+        test_count = await collection.count_documents({})
+        db_name = mongo_manager.db.name if mongo_manager.db else "None"
+        
+        return {
+            "environment": os.getenv("ENVIRONMENT", "not_set"),
+            "database_name": db_name,
+            "collection_name": COLLECTION_NAME,
+            "mongo_uri_prefix": MONGO_URI[:50] + "..." if MONGO_URI else "not_set",
+            "test_count": test_count,
+            "mongo_db_env": os.getenv("MONGO_DB", "not_set")
+        }
+    except Exception as e:
+        return {
+            "error": str(e),
+            "mongo_uri_prefix": MONGO_URI[:50] + "..." if MONGO_URI else "not_set",
+            "database_name": DATABASE_NAME,
+            "environment": os.getenv("ENVIRONMENT", "not_set")
+        }
+
+
 @app.get("/api/stats")
 async def get_stats():
     """Get comprehensive database statistics"""
