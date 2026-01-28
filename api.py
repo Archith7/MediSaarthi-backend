@@ -819,6 +819,39 @@ async def get_patient_history(patient_name: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/upload")
+async def upload_simplified(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
+    """
+    Simplified upload endpoint without OCR processing
+    Returns a message explaining OCR is disabled for deployment
+    """
+    try:
+        # Validate file type
+        allowed_extensions = {'.png', '.jpg', '.jpeg', '.pdf', '.tiff', '.bmp'}
+        file_ext = Path(file.filename).suffix.lower()
+        
+        if file_ext not in allowed_extensions:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Invalid file type. Allowed: {', '.join(allowed_extensions)}"
+            )
+        
+        return {
+            "success": False,
+            "message": "OCR processing is temporarily disabled for deployment optimization. The file was received successfully, but automatic text extraction is not available. Please use the sample data in the dashboard for testing the application features.",
+            "filename": file.filename,
+            "size": file.size,
+            "type": file.content_type,
+            "note": "This is a deployment limitation - OCR functionality can be enabled with proper server resources."
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[Upload] Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Upload processing failed: {str(e)}")
+
+
 @app.post("/api/ocr/upload")
 async def upload_and_extract(file: UploadFile = File(...)):
     """
